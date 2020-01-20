@@ -28,51 +28,43 @@ namespace CRM.Api.Controllers
         {
             try
             {
-                var urls = new List<string>();
-
-                if (HttpContext.Request.Form.Files != null)
+                if (HttpContext.Request.Form.Files == null)
                 {
-                    var newFileName = string.Empty;
-                    var fileName = string.Empty;
-                    string PathDB = string.Empty;
-
-                    var files = HttpContext.Request.Form.Files;
-                    var path = Configuration.GetSection("Upload:CaminhoNoServidor").Value;
-                    var url = Configuration.GetSection("Upload:UrlDoArquivo").Value;
-
-
-                    foreach (var file in files)
-                    {
-                        if (file.Length > 0)
-                        {
-                            //Getting FileName
-                            fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
-
-                            //Assigning Unique Filename (Guid)
-                            var myUniqueFileName = Convert.ToString(Guid.NewGuid());
-
-                            //Getting file Extension
-                            var FileExtension = Path.GetExtension(fileName);
-
-                            // concating  FileName + FileExtension
-                            newFileName = myUniqueFileName + FileExtension;
-
-                            // Combines two strings into a path.
-                            fileName = path + newFileName;
-
-                            // if you want to store path of folder in database
-                            urls.Add(url + newFileName);
-
-                            using (FileStream fs = System.IO.File.Create(fileName))
-                            {
-                                file.CopyTo(fs);
-                                fs.Flush();
-                            }
-                        }
-                    }
+                    return BadRequest("Operação não é válida!");
                 }
 
-                return Ok(urls.ToArray());
+                var newFileName = string.Empty;
+                var fileName = string.Empty;
+                string PathDB = string.Empty;
+
+                var file = HttpContext.Request.Form.Files[0];
+                var path = Configuration.GetSection("Upload:CaminhoNoServidor").Value;
+                var url = Configuration.GetSection("Upload:UrlDoArquivo").Value;
+
+                if (file.Length > 0)
+                {
+                    //Getting FileName
+                    fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
+
+                    //Assigning Unique Filename (Guid)
+                    var myUniqueFileName = Convert.ToString(Guid.NewGuid());
+
+                    //Getting file Extension
+                    var FileExtension = Path.GetExtension(fileName);
+
+                    // concating  FileName + FileExtension
+                    newFileName = myUniqueFileName + FileExtension;
+
+                    // Combines two strings into a path.
+                    fileName = path + newFileName;
+
+                    using (FileStream fs = System.IO.File.Create(fileName))
+                    {
+                        file.CopyTo(fs);
+                        fs.Flush();
+                    }
+                }
+                return Ok(url + newFileName);
             }
             catch (Exception ex)
             {
